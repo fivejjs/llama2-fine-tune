@@ -18,6 +18,15 @@ from trl import SFTTrainer
 
 from utils import find_all_linear_names, print_trainable_parameters
 
+
+def formatting_prompts_func(example):
+    output_texts = []
+    for i in range(len(example["prompt"])):
+        text = f"An AI tool that corrects and rephrase user text grammar errors delimited by triple backticks to standard English.\n### Input: ```{example['prompt'][i]}```\n ### Output: {example['completion'][i]}"
+        output_texts.append(text)
+    return output_texts
+
+
 output_dir = "./results"
 model_name = "NousResearch/Llama-2-7b-hf"
 
@@ -51,14 +60,6 @@ peft_config = LoraConfig(
 
 base_model = get_peft_model(base_model, peft_config)
 print_trainable_parameters(base_model)
-
-
-def formatting_prompts_func(example):
-    output_texts = []
-    for i in range(len(example["prompt"])):
-        text = f"An AI tool that corrects and rephrase user text grammar errors delimited by triple backticks to standard English.\n### Input: ```{example['prompt'][i]}```\n ### Output: {example['completion'][i]}"
-        output_texts.append(text)
-    return output_texts
 
 
 # Parameters for training arguments details => https://github.com/huggingface/transformers/blob/main/src/transformers/training_args.py#L158
