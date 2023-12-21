@@ -1,16 +1,22 @@
 import os
-import torch
 
-from transformers import AutoTokenizer, TrainingArguments, AutoModelForCausalLM, BitsAndBytesConfig
+import torch
 from datasets import load_dataset
+from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
+from transformers import (
+    AutoModelForCausalLM,
+    AutoTokenizer,
+    BitsAndBytesConfig,
+    TrainingArguments,
+)
 from trl import DPOTrainer
-from peft import LoraConfig, prepare_model_for_kbit_training, get_peft_model
+
 from utils import find_all_linear_names, print_trainable_parameters
 
-output_dir="./dpo_results"
+output_dir = "./dpo_results"
 model_name = "merged_peft/final_merged_checkpoint"
 
-dataset = load_dataset("json", data_files="dpo_conversations.json",split="train")
+dataset = load_dataset("json", data_files="dpo_conversations.json", split="train")
 
 bnb_config = BitsAndBytesConfig(
     load_in_4bit=True,
@@ -18,14 +24,19 @@ bnb_config = BitsAndBytesConfig(
     bnb_4bit_compute_dtype=torch.bfloat16,
 )
 
-model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=torch.bfloat16, quantization_config=bnb_config)
+model = AutoModelForCausalLM.from_pretrained(
+    model_name, torch_dtype=torch.bfloat16, quantization_config=bnb_config
+)
 model.config.use_cache = False
 model = prepare_model_for_kbit_training(model)
 
-model_ref = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=torch.bfloat16, quantization_config=bnb_config)
+model_ref = AutoModelForCausalLM.from_pretrained(
+    model_name, torch_dtype=torch.bfloat16, quantization_config=bnb_config
+)
 
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 tokenizer.pad_token = tokenizer.eos_token
+
 
 def return_prompt_and_responses(samples):
     return {
@@ -37,21 +48,20 @@ def return_prompt_and_responses(samples):
         "rejected": samples["rejected"],
     }
 
+
 original_columns = dataset.column_names
 
 dataset = dataset.map(
-    return_prompt_and_responses,
-    batched=True,
-    remove_columns=original_columns
+    return_prompt_and_responses, batched=True, remove_columns=original_columns
 )
 
 training_args = TrainingArguments(
     per_device_train_batch_size=4,
     gradient_accumulation_steps=4,
-    gradient_checkpointing =True,
-    max_grad_norm= 0.3,
-    num_train_epochs=15, 
-    save_steps= 100,
+    gradient_checkpointing=True,
+    max_grad_norm=0.3,
+    num_train_epochs=15,
+    save_steps=100,
     learning_rate=2e-4,
     bf16=True,
     save_total_limit=3,
@@ -60,7 +70,7 @@ training_args = TrainingArguments(
     optim="paged_adamw_32bit",
     lr_scheduler_type="cosine",
     warmup_ratio=0.05,
-    remove_unused_columns=False
+    remove_unused_columns=False,
 )
 
 peft_config = LoraConfig(
