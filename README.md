@@ -5,9 +5,9 @@ Scripts for fine-tuning Llama 2 using the Hugging Face TRL library
 ## Installation dependencies 
 
 ### Install pytorch
-
+`pytroch-cuda` version can be collected from [anaconda pytroch-cuda](https://anaconda.org/pytorch/pytorch-cuda/labels)
 ```sh
-conda install pytorch torchvision torchaudio pytorch-cuda=<cuda-version>12.3</cuda-version> -c pytorch -c nvidia
+conda install pytorch torchvision torchaudio pytorch-cuda=<cuda-version>12.1 or other latest version</cuda-version> -c pytorch -c nvidia
 ```
 
 ### Install dependencies
