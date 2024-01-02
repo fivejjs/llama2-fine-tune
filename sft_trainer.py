@@ -28,9 +28,11 @@ def formatting_prompts_func(example):
 
 
 output_dir = "./results"
-model_name = "NousResearch/Llama-2-7b-hf"
+# model_name = "NousResearch/Llama-2-7b-hf"
+# model_name = 'mistralai/Mistral-7B-Instruct-v0.2'
+model_name = 'TinyLlama/TinyLlama-1.1B-Chat-v1.0'
 
-dataset = load_dataset("json", data_files="conversations.json", split="train")
+dataset = load_dataset("json", data_files="tm_conversations.json", split="train")
 
 bnb_config = BitsAndBytesConfig(
     load_in_4bit=True,
@@ -50,7 +52,7 @@ tokenizer.padding_side = "right"  # Fix weird overflow issue with fp16 training
 
 # Change the LORA hyperparameters accordingly to fit your use case
 peft_config = LoraConfig(
-    r=128,
+    r=16,
     lora_alpha=16,
     target_modules=find_all_linear_names(base_model),
     lora_dropout=0.05,
@@ -77,6 +79,7 @@ training_args = TrainingArguments(
     optim="paged_adamw_32bit",
     lr_scheduler_type="cosine",
     warmup_ratio=0.05,
+    report_to="none",
 )
 
 trainer = SFTTrainer(
